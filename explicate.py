@@ -117,6 +117,14 @@ def explicate_statement(s):
     elif isinstance(s,Discard):
         return Discard(explicate_expression(s.expr))
     
+    elif isinstance(s,Return):
+        return Return(explicate_expression(s.value))
+
+    elif isinstance(s,Function):
+        return Assign([AssName(s.name,'OP_ASSIGN')],
+                      Lambda(s.argnames,s.defaults,s.flags,
+                             explicate(s.code)))
+
 def explicate_expression(e):
     global tempLabel
     if isinstance(e,Const):
@@ -280,6 +288,12 @@ def explicate_expression(e):
 
 
         return letify(expL,lambda l:letify(expR,lambda r:result(l,r)))
+
+    elif isinstance(e,Lambda):
+        return Lambda(e.argnames,e.defaults,e.flags,
+                      Stmt([Return(explicate_expression(e.code))]))
+    
+
 
 def letify(expr,k):
     global let;

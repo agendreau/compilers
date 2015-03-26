@@ -28,8 +28,8 @@ def varNames(astNode):
 
 def uniquify(astNode,varMap):
     global varLabel
+    
     if isinstance(astNode,Module):
-        #get top level var names and popuplate var map
         vars = varNames(astNode)
         for v in vars:
             uniName = v+"$"+str(varLabel)
@@ -68,19 +68,25 @@ def uniquify_stmt(s,varMap):
     elif isinstance(s,Discard):
         return Discard(uniquify_exp(s.expr))
 
+    elif isinstance(s,Return):
+        return Return(uniquify_exp(s.value,varMap))
+
     elif isinstance(s,Function):
         #compute locals
-        name = mapping[s.name]
-        localVars = varNames(s) | set(s.argnames)
+        name = varMap[s.name]
+        localVars = varNames(s.code) | set(s.argnames)
+        print localVars
         for v in localVars:
             uniName = v + "$" + str(varLabel)
             varLabel+=1
             varMap[v]=uniName
+        print varMap
+        print s.code
         return Function(s.decorators,name,[varMap[a] for a in s.argnames],
-                        s.defaults,s.flags,s.doc,uniquify_stmt(s.code,varMap))
+                        s.defaults,s.flags,s.doc,uniquify(s.code,varMap))
 
 def uniquify_exp(e,varMap):
-    global templabel
+    global varLabel
     
     if isinstance(e,Const):
         return e
@@ -118,7 +124,9 @@ def uniquify_exp(e,varMap):
     elif isinstance(e,CallFunc):
         args = []
         for exp in e.args:
-            args.append(uniquify(exp,varMap))
+            print exp
+            args.append(uniquify_exp(exp,varMap))
+        
         return CallFunc(uniquify_exp(e.node,varMap),args,e.star_args,e.dstar_args)
 
     elif isinstance(e,Compare):
@@ -144,11 +152,10 @@ def uniquify_exp(e,varMap):
             varLabel+=1
             varMap[a]=uniName
         return Lambda([varMap[a] for a in e.argnames],e.defaults,
-                      e.flags,uniquify_stmt(e.code,varMap))
+                      e.flags,uniquify_exp(e.code,varMap))
 
-    elif isinstance(e,Return):
-        return Return(uniquify_exp(e.value,varMap))
 
+'''
 
 if __name__ == '__main__':
     import compiler
@@ -163,7 +170,7 @@ if __name__ == '__main__':
     print unique
     
 
-
+'''
 
 
 

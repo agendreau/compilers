@@ -11,7 +11,7 @@ from colorSpill import *
 #from explicateNodes import *
 from typecheck import *
 from explicate import * 
-
+from uniquify import *
 
 # python compile.py example1.py
 # $gcc -m32 *.c example1.s -o test.exe -lm
@@ -23,24 +23,26 @@ from explicate import *
 if __name__ == '__main__':
     startAST = compiler.parseFile(sys.argv[1])
     
-    #explicator = explicateVisitor()
-    
-    #explicateAST = explicator.walk(startAST)
-    
-    explicateAST = explicate(startAST)
-    
-
-    
-    debug = 0
+    debug = 1
     
     
     registerTest = 0
+    
+    runCode = 0
     
     flat = []
     if (debug):
         
         print "STARTAST:"
         print startAST , "\n"
+        varMap={}
+        uniqueAST = uniquify(startAST,varMap)
+        
+        print "STARTAST:"
+        print uniqueAST , "\n"
+        
+        explicateAST = explicate(uniqueAST)
+        
         
         print "EXPLICATE_AST:"
         print explicateAST
@@ -52,7 +54,7 @@ if __name__ == '__main__':
         #tchecker = typecheckVisitor()
         #tchecker.walk(explicateAST)
 
-
+        '''
         print "flattening"
         flatast = flattenNJ.flatten(explicateAST)
         #print flatast
@@ -60,7 +62,7 @@ if __name__ == '__main__':
         print "FLAT AST"
         for n in flatast:
             print n
-    
+        '''
 
 
 
@@ -162,37 +164,37 @@ if __name__ == '__main__':
         outputCode(good,len(spill),filename)
         '''
 #OUTPUT CODE
+    if(runCode):
+        explicateAST = explicate(startAST)
 
-    explicateAST = explicate(startAST)
+        flatast = flattenNJ.flatten(explicateAST)
+        IR,vars = x86IR.generateInstructions(flatast)
 
-    flatast = flattenNJ.flatten(explicateAST)
-    IR,vars = x86IR.generateInstructions(flatast)
+        check = False
+        while not check:
+            instrLive = []
 
-    check = False
-    while not check:
-        instrLive = []
-
-        liveAfter = set([])
+            liveAfter = set([])
+                
+            liveness = livenessAnalysis(IR,instrLive,liveAfter)
+            iGraph = interferenceGraph(liveness,vars)
             
-        liveness = livenessAnalysis(IR,instrLive,liveAfter)
-        iGraph = interferenceGraph(liveness,vars)
-        
-        
-        coloring = graphColor(iGraph)
+            
+            coloring = graphColor(iGraph)
 
-        spill = toSpill(coloring)
-        tmp = Var("#tmp")
-        vars.add(tmp)
-        good,IR,vars,check = allocateRegisters(spill,liveness,vars,coloring,[],[],True)
-#print check
+            spill = toSpill(coloring)
+            tmp = Var("#tmp")
+            vars.add(tmp)
+            good,IR,vars,check = allocateRegisters(spill,liveness,vars,coloring,[],[],True)
+    #print check
 
-    filename = ""
-    prev = sys.argv[1].split('.')[0]
-    for k in sys.argv[1].split('.')[1:]:
-        filename += prev
-        prev = "."+k
+        filename = ""
+        prev = sys.argv[1].split('.')[0]
+        for k in sys.argv[1].split('.')[1:]:
+            filename += prev
+            prev = "."+k
 
-    outputCode(good,len(spill),filename)
+        outputCode(good,len(spill),filename)
     
     '''
         for i in liveness:
