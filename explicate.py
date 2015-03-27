@@ -86,6 +86,20 @@ class AddInt(Node):
     def __repr__(self):
         return "AddInteger((%s, %s))" % (repr(self.left), repr(self.right))
 
+class CallDef(Node):
+    def __init__(self,node,args):
+        self.node = node
+        self.args = args
+
+    def getChildren(self):
+        return self.node,self.args
+
+    def getChildNodes(self):
+        return self.nodes, self.args
+    
+    def __repr__(self):
+        return "CallDef((%s, %s))" % (repr(self.node), repr(self.args))
+
 def explicate(astNode):
     if isinstance(astNode,Module):
         return Module(None,explicate(astNode.node))
@@ -144,10 +158,10 @@ def explicate_expression(e):
         nodelist= []
         for n in e.args:
             nodelist.append(explicate_expression(n))
-            #if e.node.name == 'input':
-            #return InjectFrom('INT',CallFunc(explicate_expression(e.node),nodelist))
-            #else:
-        return CallFunc(explicate_expression(e.node),nodelist)
+        if e.node.name == 'input':
+            return CallFunc(explicate_expression(e.node),nodelist)
+        else:
+            return CallDef(explicate_expression(e.node),nodelist)
 
     elif isinstance(e,Or): #assuming only one argument per side
         #or_ = []

@@ -12,6 +12,7 @@ from colorSpill import *
 from typecheck import *
 from explicate import * 
 from uniquify import *
+from heapify import *
 
 # python compile.py example1.py
 # $gcc -m32 *.c example1.s -o test.exe -lm
@@ -49,6 +50,16 @@ if __name__ == '__main__':
         print 
         for x in explicateAST.node.nodes:
             print x
+            print varNames(x)
+        
+        #freevars = free_vars(explicateAST)
+        #print freevars
+        print "VARS"
+        vars = varNames(explicateAST)
+        print vars
+        
+        toHeap = free_vars(explicateAST)
+        print toHeap
         
         print "\nTYPE CHECKER OUTPUT:"
         #tchecker = typecheckVisitor()

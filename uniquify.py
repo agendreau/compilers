@@ -66,7 +66,7 @@ def uniquify_stmt(s,varMap):
         return Assign(uniquified,expr)
 
     elif isinstance(s,Discard):
-        return Discard(uniquify_exp(s.expr))
+        return Discard(uniquify_exp(s.expr),varMap)
 
     elif isinstance(s,Return):
         return Return(uniquify_exp(s.value,varMap))
