@@ -243,6 +243,37 @@ class andL(Instruction):
     def __str__(self):
         return "%s %s, %s" % (str(self.instruction),str(self.left), str(self.right))
 
+
+class Jmp(Instruction):
+    def __init__(self, label):
+        self.label = label
+        self.instruction = "jmp"
+    
+    def getInputs(self):
+        return self.label
+    
+    def __repr__(self):
+        return "%s %s" % (repr(self.instruction),repr(self.label))
+    def __str__(self):
+        return "%s %s" % (str(self.instruction),str(self.label))
+    
+
+
+class Label(Instruction):
+    def __init__(self, label):
+        self.label = label
+    
+    def getInputs(self):
+        return self.label
+    
+    def __repr__(self):
+        return "%s" % (repr(self.label))
+    
+    def __str__(self):
+        return "%s"  % (str(self.label))
+
+
+
 class Operand:
     """Abstract base class for x86 operands"""
 

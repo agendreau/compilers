@@ -390,6 +390,18 @@ def generateInstructions(astList):
             IR.extend(newIR)
             vars = newVars | vars
 
+        elif isinstance(tree,Return):
+            if isinstance(tree.value,Name):
+                vars.add(Var(tree.value.name))
+                moveNode = MovL((Var(tree.value.name),Register("%eax")))
+            else:
+                moveNode = Movl(Con((tree.value.value),Register("%eax")))
+                    
+            jumpBack = Jmp(Label("exit_"+
+            
+            
+    
+
 
     return IR,vars
 

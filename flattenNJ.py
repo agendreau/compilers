@@ -19,6 +19,11 @@ def flatten(n):
         #print "total temps: " + str(templabel)
         return flat
 
+    elif isinstance(n,Function):
+        flatCode = flatten(n.code)
+        return Function(n.decorators, n.name,n.argnames,n.defaults,n.flags,n.doc,
+                        Stmt(flatCode))
+
 def flatten_stmt(s):
     if isinstance(s, Printnl):
         flat = []
@@ -46,6 +51,11 @@ def flatten_stmt(s):
     elif isinstance(s,Discard):
         (v,a) = flatten_exp(s.expr)
         return v
+
+    elif isinstance(s,Return):
+        (v,a) = flatten_exp(s.value)
+        return v+[Return(a)]
+
 
 def flatten_exp(e):
     global templabel
@@ -91,6 +101,7 @@ def flatten_exp(e):
         return (tv,Name(newNameResult))
     
     elif isinstance(e,Subscript):
+        print e
         (vE,aE) = flatten_exp(e.expr)
         (vS,aS) = flatten_exp(e.subs[0])
         vE.extend(vS)
@@ -141,7 +152,8 @@ def flatten_exp(e):
     elif isinstance(e,List):
         elements = []
         pre = []
-        for exp in e:
+        print e
+        for exp in e.nodes:
             (preP, result) = flatten_exp(exp)
             elements.append(result)
             pre.extend(preP)
@@ -174,7 +186,7 @@ def flatten_exp(e):
         for exp in e.args:
             (v,a) = flatten_exp(exp)
             flat.extend(v)
-            args.extend(a)
+            args.append(a)
         newName = label + str(templabel)
         templabel = templabel + 1
         newNode = Assign([AssName(newName,'OP_ASSIGN')], CallFunc(e.node,args))
@@ -190,3 +202,19 @@ def flatten_exp(e):
         vL.extend(vR)
         vL.append(newNode)
         return (vL,Name(newName))
+
+    elif isinstance(e,CallDef):
+        #flat = []
+        args = []
+        flat,name = flatten_exp(e.node)
+        for exp in e.args:
+            (v,a) = flatten_exp(exp)
+            flat.extend(v)
+            args.append(a)
+        newName = label + str(templabel)
+        templabel = templabel + 1
+        newNode = Assign([AssName(newName,'OP_ASSIGN')], CallDef(name,args))
+        return (flat+[newNode],Name(newName))
+
+  
+

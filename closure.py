@@ -119,17 +119,21 @@ def create_closure(ast):
         local = varNames(ast.code)
         freeVars = free_vars(ast.code)
         trulyFree = sorted(freeVars - local-set(ast.argnames))
+        freeNodes = []
+        for v in trulyFree:
+            freeNodes.append(Name(v))
+        
         initFree = []
-        for i,v in enumerate(trulyFree):
-            newNode = Assign([AssName(Name(v),'OP_ASSIGN')],
+        for i,v in enumerate(freeNodes):
+            newNode = Assign([AssName(v.name,'OP_ASSIGN')],
                               Subscript(Name('$free_vars'),'OP_APPLY',
-                                        InjectFrom('INT',Const(i))))
+                                        [InjectFrom('INT',Const(i))]))
             initFree.append(newNode)
         funcNode = Function(None,globalName.name,['$free_vars']+ast.argnames,None,0,None,
                             Stmt(initFree+code.nodes))
 
         return InjectFrom('BIG',CallFunc(Name('create_closure'),
-                                         [globalName, List(trulyFree)])),[funcNode]+codeDefs
+                                         [globalName, List(freeNodes)])),[funcNode]+codeDefs
     
     elif isinstance(ast,UnarySub):
         s,defs = create_closure(ast.expr)

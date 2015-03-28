@@ -13,6 +13,7 @@ from typecheck import *
 from explicate import * 
 from uniquify import *
 from heapify import *
+from closure import *
 
 # python compile.py example1.py
 # $gcc -m32 *.c example1.s -o test.exe -lm
@@ -60,6 +61,32 @@ if __name__ == '__main__':
         
         toHeap = free_vars(explicateAST)
         print toHeap
+        
+        print "CLOSURES"
+        closure,defs = create_closure(explicateAST)
+        for n in closure.node.nodes:
+            print n
+        
+        print
+        print "DEFS"
+        print defs
+        print
+        flatMain = flattenNJ.flatten(closure)
+        print "FLAT MAIN:"
+        for f in flatMain:
+            print f
+       
+        
+        print
+#print defs[0]
+        funcs = flattenNJ.flatten(defs[0]) # hack to test one
+        print "FLAT FUNCS"
+#        print funcs
+        
+        for f in funcs.code:
+            print f
+
+        
         
         print "\nTYPE CHECKER OUTPUT:"
         #tchecker = typecheckVisitor()
