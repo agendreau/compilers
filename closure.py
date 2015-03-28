@@ -3,11 +3,13 @@ from explicate import *
 from heapify import *
 
 lamby = "lambda_"
-label = 0
+lambdaLabel = 0
+
+
 
 
 def create_closure(ast):
-    global label
+    global lambdaLabel
     
     if isinstance(ast,Module):
         stmts,defs = create_closure(ast.node)
@@ -41,7 +43,7 @@ def create_closure(ast):
         expr,defs = create_closure(ast.expr)
         for n in ast.nodes:
             if isinstance(n,Subscript):
-                (s1,nd1) = create_closure(n.expr))
+                (s1,nd1) = create_closure(n.expr)
                 (s2,nd2) = create_closure(n.subs[0])
                 stmts.append(Subscript(s1,n.flags,[s2]))
                 defs.extend(nd1)
@@ -76,46 +78,90 @@ def create_closure(ast):
         return AddInt((left,right)), defLeft+defRight
 
 
-elif isinstance(ast,CallFunc): #TODO
-        fv_args = [create_closure(n) for n in ast.args]
-        free_in_args = reduce(lambda a, b: a | b, fv_args, set([]))
-        return free_in_args - create_closure(ast.node)
+    elif isinstance(ast,CallFunc):
+        funcname,defsName = create_closure(ast.node)
+        args = []
+        defsArgs = []
+        for arg in ast.args:
+            newArg,newDefs = create_closure(arg)
+            args.append(newArg)
+
+        return CallFunc(funcname,args),defsName+defsArgs
+
+    elif isinstance(ast,CallDef):
+        funcName,defsName = create_closure(ast.node)
+        args = []
+        defsArgs = []
+        for arg in ast.args:
+            newArg,newDefs = create_closure(arg)
+            args.append(newArg)
+            defsArgs.extend(newDefs)
+
+        def result(fName):
+            return CallDef((CallFunc(Name('get_fun_ptr'),[fName])),
+                           [CallFunc(Name('get_free_vars'),[fName])]+args)
+
+        return letify(funcName,lambda fName:result(fName)),defsName+defsArgs
+
     
-elif isinstance(ast,CallDef): #TODO
-        fv_args = [create_closure(n) for n in ast.args]
-        free_in_args = reduce(lambda a, b: a | b, fv_args, set([]))
-        return free_in_args | create_closure(ast.node)
-    
-elif isinstance(ast,Lambda): #TODO
+    elif isinstance(ast,Lambda):
+        code,codeDefs = create_closure(ast.code)
+        '''
+        args = []
+        defsArgs = []
+        for arg in ast.argnames:
+            newArg, newDefs = create_closure(arg)
+            args.append(newArg)
+            defsArgs.extend(newDefs)
+        '''
+        globalName = Name(lamby+str(lambdaLabel))
+        lambdaLabel+=1
         local = varNames(ast.code)
-        #print "lambda"
-        print create_closure(ast.code) - set(ast.argnames) - local
-        return create_closure(ast.code) - set(ast.argnames) - local
+        freeVars = free_vars(ast.code)
+        trulyFree = sorted(freeVars - local-set(ast.argnames))
+        initFree = []
+        for i,v in enumerate(trulyFree):
+            newNode = Assign([AssName(Name(v),'OP_ASSIGN')],
+                              Subscript(Name('$free_vars'),'OP_APPLY',
+                                        InjectFrom('INT',Const(i))))
+            initFree.append(newNode)
+        funcNode = Function(None,globalName.name,['$free_vars']+ast.argnames,None,0,None,
+                            Stmt(initFree+code.nodes))
+
+        return InjectFrom('BIG',CallFunc(Name('create_closure'),
+                                         [globalName, List(trulyFree)])),[funcNode]+codeDefs
     
     elif isinstance(ast,UnarySub):
         s,defs = create_closure(ast.expr)
         return UnarySub(s),defs
     
-elif isinstance(ast,IfExp): #TODO
-        return create_closure(ast.test)|create_closure(ast.then)|create_closure(ast.else_)
+    elif isinstance(ast,IfExp):
+        test,defsTest = create_closure(ast.test)
+        then,defsThen = create_closure(ast.then)
+        else_,defsElse = create_closure(ast.else_)
+        return IfExp(test,then,else_),defsTest+defsThen+defsElse
     
-elif isinstance(ast,Subscript): #TODO
-        return create_closure(ast.subs[0]) | create_closure(ast.expr)
+    elif isinstance(ast,Subscript):
+        expr,defsExpr = create_closure(ast.expr)
+        index,defsIndex = create_closure(ast.subs[0])
+        return Subscript(expr,ast.flags,[index]),defsExpr + defsIndex
     
     elif isinstance(ast,ProjectTo):
         s,defs = create_closure(ast.arg)
-        return ProjectTo(s),defs
+        return ProjectTo(ast.typ,s),defs
 
     elif isinstance(ast,InjectFrom):
         s,defs = create_closure(ast.arg)
-        return InjectTo(s),defs
+        return InjectFrom(ast.typ,s),defs
     
     elif isinstance(ast,GetTag):
         s,defs = create_closure(ast.arg)
         return GetTag(s),defs
 
-    elif isinstance(ast,Let): #TODO
-        return (create_closure(ast.body)|create_closure(ast.rhs))-create_closure(ast.var)
+    elif isinstance(ast,Let):
+        body,defsBody = create_closure(ast.body)
+        rhs,defsRHS = create_closure(ast.rhs)
+        return Let(ast.var,body,let), defsRHS+defsBody
     
     elif isinstance(ast,List):
         elements = []
