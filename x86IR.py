@@ -5,6 +5,9 @@ from explicate import *
 
 outputlabel = 0
 
+def convertMain(flatAST):
+    return Function(None,Name('_main'),[],None,0,None,Stmt(flatAST))
+
 def generateOne(instr,assignmentVariable):
     
     vars = set([])
@@ -75,11 +78,12 @@ def generateOne(instr,assignmentVariable):
             funcNode = Call(instr.node.name+'_int')
             moveNode = MovL((Register("%eax"),assignmentVariable))
             return [funcNode,moveNode],vars
+            '''
         elif instr.node.name == 'add' or instr.node.name=='equal' or instr.node.name == 'not_equal':
             args = instr.args
             #print args
-            pushNode1 = Push(Var(args[1]))
-            pushNode2 = Push(Var(args[0]))
+            pushNode1 = Push(Var(args[1].name))
+            pushNode2 = Push(Var(args[0].name))
             funcNode = Call(instr.node.name)
             moveNode = MovL((Register("%eax"),assignmentVariable))
             popStack = AddL((Con(8),Register("%esp")))
@@ -94,7 +98,24 @@ def generateOne(instr,assignmentVariable):
             popStack = AddL((Con(4),Register("%esp")))
             vars.add(Var(args[0]))
             return [pushNode,funcNode,moveNode,popStack],vars
+            '''
+        else:
+            toPop = len(instr.args)
+            push=[]
+            for arg in reversed(instr.args):
+                if isinstance(arg,Name):
+                    v = Var(arg.name)
+                    push.append(Push(v))
+                    vars.add(v)
+                else:
+                    push.append(Con(arg.value))
 
+            callNode = Call(instr.node.name)
+            moveNode = MovL((Register("%eax"),assignmentVariable))
+            popNode = AddL((Con(toPop*4),Register("%esp")))
+            return push+[callNode]+[moveNode]+[popNode],vars
+                           
+            
 
     
             '''
@@ -174,15 +195,14 @@ def generateOne(instr,assignmentVariable):
         movNode = MovL((var,assignmentVariable))
                 
         return ([movNode,shiftNode,tagNode],vars)
-        
-        
-
-
+    
     elif isinstance(instr,Subscript):
+        
         expr = instr.expr
         subs = instr.subs[0]
         pushCollection = Push(Var(expr.name))
         vars.add(Var(expr.name))
+        #print subs
         
         if isinstance(subs,Name):
             ##print subs
@@ -211,11 +231,6 @@ def generateOne(instr,assignmentVariable):
         
             
         createDictionary.extend([Call('create_dict'),movNode,tagNode])
-            
-            
-        
-        
-       
 
         for (k,v) in items:
            
@@ -317,6 +332,22 @@ def generateOne(instr,assignmentVariable):
         #return [compareNode,setnode,movenode,movevalnode],vars
         return [compareNode,setnode,movenode],vars
 
+    elif isinstance(instr,CallDef):
+        toPop = len(instr.args)
+        push=[]
+        for arg in reversed(instr.args):
+            if isinstance(arg,Name):
+                v = Var(arg.name)
+                push.append(Push(v))
+                vars.add(v)
+            else:
+                push.append(Con(arg.value))
+        vars.add(Var(instr.node.name))
+        callNode = CallStar(Var(instr.node.name))
+        moveNode = MovL((Register("%eax"),assignmentVariable))
+        popNode = AddL((Con(toPop*4),Register("%esp")))
+        return push+[callNode]+[moveNode]+[popNode],vars
+
 def generateAssign(tree):
     #if isinstance(tree,Subscript)
     ##print tree
@@ -327,6 +358,9 @@ def generateAssign(tree):
         
         ##print assignmentVariable
         ##print tree.expr
+        #print assignNode
+        #print assignmentVariable
+        #print tree.expr
         newIR,vars = generateOne(tree.expr,assignmentVariable)
     
         vars.add(assignmentVariable)
@@ -366,7 +400,10 @@ def generatePrint(tree):
     popStack = AddL((Con(4),Register("%esp")))
     return [pushNode,printNode,popStack],vars
 
-def generateInstructions(astList):
+def generateInstructions(function):
+    print "here"
+    astList = function.code.nodes
+    #print astList
     
     IR = []
     vars = set([])
@@ -397,9 +434,10 @@ def generateInstructions(astList):
             else:
                 moveNode = Movl(Con((tree.value.value),Register("%eax")))
                     
-            jumpBack = Jmp(Label("exit_"+
+                    #jumpBack = Jmp(Label("exit_"+function.name))
+
             
-            
+            IR.extend([moveNode])#,jumpBack])
     
 
 
@@ -451,7 +489,7 @@ def generateIf(instr):
             vars = newVars | vars
     return ([If(s,IR)],vars)
 
-
+'''
 def outputCode(instructionList,stackSize,filename):
     preamble = ".globl main\nmain:\n\tpushl %ebp\n\tmovl %esp, %ebp\n\t"
     postemble = 'movl $0, %eax\n\tleave\n\tret\n'
@@ -463,6 +501,34 @@ def outputCode(instructionList,stackSize,filename):
     #print code
     assemblyCode += code
     assemblyCode += postemble
+    targetfile = open(filename+".s", "w")
+    targetfile.truncate()
+    targetfile.write(assemblyCode)
+    targetfile.close()
+'''
+
+def outputCode(functions,filename):
+    assemblyCode=""
+    for f in functions:
+        print len(f)
+        name = f[0]
+        print name
+        stackSize = f[2]
+        preamble = ".globl "+ name+"\n"+name+":\n\tpushl %ebp\n\tmovl %esp, %ebp\n\t"
+        stackspace = "subl $" + str(stackSize*4)+",%esp\n\n\t"
+        if name=='main':
+            postemble = 'movl $0, %eax\n\tleave\n\tret\n'
+        else:
+            postamble = ""
+
+
+        assemblyCode += preamble
+        assemblyCode += stackspace
+        code = outputHelper(f[1],"")
+        #print code
+        assemblyCode += code
+        assemblyCode += postemble
+
     targetfile = open(filename+".s", "w")
     targetfile.truncate()
     targetfile.write(assemblyCode)

@@ -248,6 +248,8 @@ class Jmp(Instruction):
     def __init__(self, label):
         self.label = label
         self.instruction = "jmp"
+        self.liveAfter = set([])
+        self.liveBefore = set([])
     
     def getInputs(self):
         return self.label
@@ -256,12 +258,12 @@ class Jmp(Instruction):
         return "%s %s" % (repr(self.instruction),repr(self.label))
     def __str__(self):
         return "%s %s" % (str(self.instruction),str(self.label))
-    
-
 
 class Label(Instruction):
     def __init__(self, label):
         self.label = label
+        self.liveAfter = set([])
+        self.liveBefore = set([])
     
     def getInputs(self):
         return self.label
@@ -271,6 +273,22 @@ class Label(Instruction):
     
     def __str__(self):
         return "%s"  % (str(self.label))
+
+class CallStar(Instruction):
+    def __init__(self, funcName):
+        self.instruction = "call *"
+        self.funcName = funcName
+        self.liveAfter = set([])
+        self.liveBefore = set([])
+    
+    def getInputs(self):
+        return self.funcName
+    
+    def __repr__(self):
+        return "%s%s" % (repr(self.instruction),repr(self.funcName))
+    
+    def __str__(self):
+        return "%s %s" % (str(self.instruction),str(self.funcName))
 
 
 

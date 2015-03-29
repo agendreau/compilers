@@ -82,29 +82,95 @@ if __name__ == '__main__':
         funcs = flattenNJ.flatten(defs[0]) # hack to test one
         print "FLAT FUNCS"
 #        print funcs
-        
+        print funcs
+        '''
         for f in funcs.code:
             print f
+        '''
+        print
+        print "MAIN"
+        create_main = convertMain(flatMain)
+        print create_main
+        print
+        
+        IR,vars = x86IR.generateInstructions(create_main)
+        instrs = x86IR.prettyPrintInstr(IR,[])
+        print 
+        for i in instrs:
+            print i
+        print
+        #print funcs
+        
+        func1,vars1 = x86IR.generateInstructions(funcs)
+        print
+        print "function defs"
+        instrsFunc = x86IR.prettyPrintInstr(func1,[])
+        print funcs.name
+        for i in instrsFunc:
+            print i
+
+        funcList = [('main',IR,vars),(funcs.name,func1,vars1)]
+        funcsOutput = []
+        for n in funcList:
+            vars = n[2]
+            name = n[0]
+            IR = n[1]
+            instrLive = []
+            liveAfter = set([])
+            print
+            liveness = livenessAnalysis(IR,instrLive,liveAfter)
+            #print liveness
+            print len(IR)
+            print total(IR)
+            print len(liveness)
+            instrs = x86IR.prettyPrint(IR,[])
+            
+            for index,i in enumerate(instrs):
+                print str(index) + " " + str(i)
+
+
+            print
+            for (i,v) in enumerate(prettyPrintInstr(liveness,[])):
+                print str(i) + " " + str(v)
+            print
+            print
+            
+            iGraph = interferenceGraph(liveness,vars)
+            #print iGraph
+            for (k,v) in iGraph.iteritems():
+                print "key: " + str(k)
+                print "values: " + str(v)
+            
+            coloring = graphColor(iGraph)
+            print coloring
+            
+            spill = toSpill(coloring)
+            
+            print "STACK SIZE"
+            print len(spill)
+            tmp = Var("#tmp")
+            vars.add(tmp)
+            print spill
+            print coloring
+            print vars
+            #print liveness
+            good,IR,newVars,check = allocateRegisters(spill,liveness,vars,coloring,[],[],True)
+            print good
+            funcsOutput.append((name,good,len(spill)))
+            print
+            
+            
+        
+        filename = ""
+        prev = sys.argv[1].split('.')[0]
+        for k in sys.argv[1].split('.')[1:]:
+            filename += prev
+            prev = "."+k
+        print len(funcsOutput)
+        outputCode(funcsOutput,filename)
 
         
-        
-        print "\nTYPE CHECKER OUTPUT:"
-        #tchecker = typecheckVisitor()
-        #tchecker.walk(explicateAST)
 
-        '''
-        print "flattening"
-        flatast = flattenNJ.flatten(explicateAST)
-        #print flatast
-        print "done flattening"
-        print "FLAT AST"
-        for n in flatast:
-            print n
-        '''
-
-
-
-    
 
     
     if(registerTest):

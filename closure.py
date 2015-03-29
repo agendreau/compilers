@@ -129,7 +129,7 @@ def create_closure(ast):
                               Subscript(Name('$free_vars'),'OP_APPLY',
                                         [InjectFrom('INT',Const(i))]))
             initFree.append(newNode)
-        funcNode = Function(None,globalName.name,['$free_vars']+ast.argnames,None,0,None,
+        funcNode = Function(None,globalName.name,[Name('$free_vars')]+ast.argnames,None,0,None,
                             Stmt(initFree+code.nodes))
 
         return InjectFrom('BIG',CallFunc(Name('create_closure'),

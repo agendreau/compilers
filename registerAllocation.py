@@ -81,7 +81,7 @@ def livenessAnalysis(oldList,liveSet,liveAfter):
 
             return livenessAnalysis(oldList[:-1],[i]+liveSet,i.liveBefore)
 
-        elif isinstance(i,Call):
+        elif isinstance(i,Call) or isinstance(i,CallStar) or isinstance(i,Jmp) or isinstance(i,Label):
             i.liveBefore = liveAfter
             i.liveAfter = liveAfter
             return livenessAnalysis(oldList[:-1],[i]+liveSet,i.liveBefore)
@@ -386,7 +386,7 @@ def saturation(vertices,interferenceGraph,coloring):
     #print v
     
     #print v
-        #print v
+        print v
         if v.name[0] == "#":
             initSat.add_task(v,-sat,countTmp)
             countTmp = countTmp-1
@@ -421,15 +421,14 @@ def allocateRegisters(toSpill,instructionList,variables,coloring,good,bad,check)
     #good = []
     #bad = []
     tmp = Var("#tmp")
-
-
+    
 
     if len(instructionList) == 0:
         return (good,bad,variables,check)
 
     else:
         i = instructionList[0]
-        #print i
+        print i
         if isinstance(i,AddL):
             regl = i.left
             regr = i.right
@@ -664,9 +663,19 @@ def allocateRegisters(toSpill,instructionList,variables,coloring,good,bad,check)
 
 
 
-        elif isinstance(i,Call) or isinstance(i,SetNode):
+        elif isinstance(i,Call) or isinstance(i,SetNode) or isinstance(i,Jmp) or isinstance(i,Label):
             good.append(i)
             bad.append(i)
+            return allocateRegisters(toSpill,instructionList[1:],variables,coloring,good,bad,check)
+
+        elif isinstance(i,CallStar):
+            bad.append(i)
+            local = toSpill.has_key(i.funcName)
+            if local:
+                goodNode = CallStar(Address(toSpill[i.funcName]))
+            else:
+                goodNode = CallStar(Register(colorMap[coloring[i.funcName]]))
+            good.append(goodNode)
             return allocateRegisters(toSpill,instructionList[1:],variables,coloring,good,bad,check)
 
         elif isinstance(i,sAll):
