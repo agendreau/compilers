@@ -1,6 +1,7 @@
 from compiler.ast import *
 #from explicateNodes import *
-from explicate import * 
+from explicate import *
+from x86Nodes import *
 
 templabel=0
 label="$tmp"
@@ -65,7 +66,7 @@ def flatten_exp(e):
     elif isinstance(e,Const):
         return([],e)
     
-    elif isinstance(e,Name):
+    elif isinstance(e,Name) or isinstance(e,FuncName):
         return([],e)
     
     elif isinstance(e,AddInt):
@@ -153,11 +154,14 @@ def flatten_exp(e):
         elements = []
         pre = []
         print e
+        print e.nodes
         for exp in e.nodes:
+            print exp
             (preP, result) = flatten_exp(exp)
             elements.append(result)
             pre.extend(preP)
-        
+        print "ELEMENTS"
+        print elements
         newName = label + str(templabel)
         templabel = templabel + 1
         newNode = Assign([AssName(newName,'OP_ASSIGN')], List(elements))
@@ -187,6 +191,8 @@ def flatten_exp(e):
             (v,a) = flatten_exp(exp)
             flat.extend(v)
             args.append(a)
+        print "CALL ARGS"
+        print flat
         newName = label + str(templabel)
         templabel = templabel + 1
         newNode = Assign([AssName(newName,'OP_ASSIGN')], CallFunc(e.node,args))

@@ -288,13 +288,42 @@ class CallStar(Instruction):
         return "%s%s" % (repr(self.instruction),repr(self.funcName))
     
     def __str__(self):
-        return "%s %s" % (str(self.instruction),str(self.funcName))
+        return "%s%s" % (str(self.instruction),str(self.funcName))
+
+
 
 
 
 class Operand:
     """Abstract base class for x86 operands"""
 
+class FuncName(Operand):
+    def __init__(self,name):
+        self.name = name
+    
+    def getInputs(self):
+        return self.name
+    
+    def __repr__(self):
+        return "$%s" % (repr(self.name))
+    
+    def __str__(self):
+        return "$%s" % (str(self.name))
+
+    def __eq__(self,v):
+        if isinstance(v,Funcname):
+            return self.name == v.name
+        else:
+            return False
+                
+    def __ne__(self,FuncName):
+        if isinstance(v,Var):
+            return self.name != v.name
+        else:
+            return True
+    
+    def __hash__(self):
+        return hash(self.name)
 
 class Con(Operand):
     def __init__(self,value):

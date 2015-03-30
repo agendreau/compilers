@@ -71,6 +71,10 @@ def generateOne(instr,assignmentVariable):
         moveNode = MovL((Var(instr.name),assignmentVariable))
         vars.add(Var(instr.name))
         return [moveNode],vars
+
+    elif isinstance(instr,FuncName):
+        moveNode = ((Var(instr.name),assignmentVariable))
+        return [moveNode],vars
     
     
     elif isinstance(instr,CallFunc):
@@ -107,8 +111,10 @@ def generateOne(instr,assignmentVariable):
                     v = Var(arg.name)
                     push.append(Push(v))
                     vars.add(v)
+                elif isinstance(arg,FuncName):
+                    push.append(Push(arg))
                 else:
-                    push.append(Con(arg.value))
+                    push.append(Push(Con(arg.value)))
 
             callNode = Call(instr.node.name)
             moveNode = MovL((Register("%eax"),assignmentVariable))
@@ -657,6 +663,7 @@ def outputHelper(instructionList,varmap):
 def prettyPrint(IR,toString):
     if (len(IR)!=0):
         i = IR[0]
+        print i
         if isinstance(i,If):
             #print "IF"
             ifList = []

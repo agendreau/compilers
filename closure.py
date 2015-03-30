@@ -1,6 +1,7 @@
 from uniquify import *
 from explicate import *
 from heapify import *
+from x86Nodes import *
 
 lamby = "lambda_"
 lambdaLabel = 0
@@ -114,7 +115,7 @@ def create_closure(ast):
             args.append(newArg)
             defsArgs.extend(newDefs)
         '''
-        globalName = Name(lamby+str(lambdaLabel))
+        globalName = FuncName(lamby+str(lambdaLabel))
         lambdaLabel+=1
         local = varNames(ast.code)
         freeVars = free_vars(ast.code)
@@ -131,7 +132,8 @@ def create_closure(ast):
             initFree.append(newNode)
         funcNode = Function(None,globalName.name,[Name('$free_vars')]+ast.argnames,None,0,None,
                             Stmt(initFree+code.nodes))
-
+        print "LIST OF FREE NODES"
+        print freeNodes
         return InjectFrom('BIG',CallFunc(Name('create_closure'),
                                          [globalName, List(freeNodes)])),[funcNode]+codeDefs
     
