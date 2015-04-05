@@ -6,7 +6,7 @@ from explicate import *
 outputlabel = 0
 
 def convertMain(flatAST):
-    return Function(None,Name('_main'),[],None,0,None,Stmt(flatAST))
+    return Function(None,'_main',[],None,0,None,Stmt(flatAST))
 
 def generateOne(instr,assignmentVariable):
     
@@ -408,11 +408,34 @@ def generatePrint(tree):
 
 def generateInstructions(function):
     print "here"
+    prologue = []
+    loadParams = []
+    epilogue = []
+    vars = set([])
+    print "FUNCTION NAME"
+    print function.name
+    if function.name != '_main':
+        prologue = [Push(Register("%edi")),Push(Register("%esi")),Push(Register("%ebx")),
+                    Push(Register("%edx"))]
+        offset = 8
+        print function.argnames
+        for arg in function.argnames:
+            if isinstance(arg,Name):
+                loadParams.append(MovL((Address(offset),Var(arg.name))))
+                vars.add(Var(arg.name))
+            else:
+                loadParams.append(MovL((Address(offset),Var(arg))))
+                vars.add(Var(arg))
+            offset+=4
+        
+        epilogue = [Pop(Register("%edi")),Pop(Register("%esi")),Pop(Register("%ebx")),
+                                Pop(Register("%edx"))]
+
     astList = function.code.nodes
     #print astList
     
-    IR = []
-    vars = set([])
+    IR = prologue+loadParams
+
     #print astList
     for tree in astList:
         #print tree
@@ -445,7 +468,7 @@ def generateInstructions(function):
             
             IR.extend([moveNode])#,jumpBack])
     
-
+    IR.extend(epilogue)
 
     return IR,vars
 
@@ -525,7 +548,7 @@ def outputCode(functions,filename):
         if name=='main':
             postemble = 'movl $0, %eax\n\tleave\n\tret\n'
         else:
-            postamble = ""
+            postemble = 'leave\n\tret\n'
 
 
         assemblyCode += preamble

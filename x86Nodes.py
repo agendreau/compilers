@@ -107,6 +107,22 @@ class Push(Instruction):
     def __str__(self):
         return "%s %s" % (str(self.instruction),str(self.argument))
 
+class Pop(Instruction):
+    def __init__(self,argument):
+        self.instruction = "popl"
+        self.argument = argument
+        self.liveAfter = set([])
+        self.liveBefore = set([])
+    
+    def getInputs(self):
+        return self.argument
+    
+    def __repr__(self):
+        return "%s %s" % (repr(self.instruction),repr(self.argument))
+    
+    def __str__(self):
+        return "%s %s" % (str(self.instruction),str(self.argument))
+
 class CmpL(Instruction):
     def __init__(self,leftright):
         self.instruction = "cmpl"

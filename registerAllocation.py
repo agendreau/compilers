@@ -72,16 +72,18 @@ def livenessAnalysis(oldList,liveSet,liveAfter):
             i.liveAfter = liveAfter
             return livenessAnalysis(oldList[:-1],[i]+liveSet,i.liveBefore)
             
-        elif isinstance(i,Push):
+        elif isinstance(i,Push) or isinstance(i,CallStar):
             i.liveAfter = liveAfter
-            if isinstance(i.argument,Var):
+            if isinstance(i,Push) and isinstance(i.argument,Var):
                 i.liveBefore = (liveAfter)|set([i.argument])
+            elif isinstance(i,CallStar) and isinstance(i.funcName,Var):
+                i.liveBefore = (liveAfter)|set([i.funcName])
             else:
                 i.liveBefore = (liveAfter)
 
             return livenessAnalysis(oldList[:-1],[i]+liveSet,i.liveBefore)
 
-        elif isinstance(i,Call) or isinstance(i,CallStar) or isinstance(i,Jmp) or isinstance(i,Label):
+        elif isinstance(i,Call) or isinstance(i,Jmp) or isinstance(i,Label) or isinstance(i,Pop):
             i.liveBefore = liveAfter
             i.liveAfter = liveAfter
             return livenessAnalysis(oldList[:-1],[i]+liveSet,i.liveBefore)
@@ -190,6 +192,7 @@ def interferencePoint(instructionList,interference,vars):
             else:
                 for v in i.liveAfter:
                     if v!=t:
+                        print i
                         interference[v].add(t)
                         interference[t].add(v)
 
@@ -220,7 +223,7 @@ def interferencePoint(instructionList,interference,vars):
                     interference[t].add(v)
 
 
-        elif isinstance(i,Call):
+        elif isinstance(i,Call) or isinstance(i,CallStar):
             for v in i.liveAfter:
                 interference[v].add(Register("%eax"))
                 interference[v].add(Register("%al"))
@@ -594,7 +597,7 @@ def allocateRegisters(toSpill,instructionList,variables,coloring,good,bad,check)
             regl = i.left
             regr = i.right
             localR = toSpill.has_key(regr)
-            if isinstance(regl,Con):
+            if isinstance(regl,Con) or isinstance(regl,Address):
                 if localR:
                     goodNode = MovL((regl,Address(toSpill[regr])))
                 else:
@@ -663,7 +666,7 @@ def allocateRegisters(toSpill,instructionList,variables,coloring,good,bad,check)
 
 
 
-        elif isinstance(i,Call) or isinstance(i,SetNode) or isinstance(i,Jmp) or isinstance(i,Label):
+        elif isinstance(i,Call) or isinstance(i,SetNode) or isinstance(i,Jmp) or isinstance(i,Label) or isinstance(i,Pop):
             good.append(i)
             bad.append(i)
             return allocateRegisters(toSpill,instructionList[1:],variables,coloring,good,bad,check)
