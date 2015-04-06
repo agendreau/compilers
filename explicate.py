@@ -158,7 +158,7 @@ def explicate_expression(e):
         nodelist= []
         for n in e.args:
             nodelist.append(explicate_expression(n))
-        if e.node.name == 'input':
+        if isinstance(e.node,Name) and e.node.name == 'input':
             return CallFunc(explicate_expression(e.node),nodelist)
         else:
             return CallDef(explicate_expression(e.node),nodelist)

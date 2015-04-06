@@ -61,12 +61,12 @@ def uniquify_stmt(s,varMap):
             if isinstance(n, AssName):
                 uniquified.append(AssName(varMap[n.name], 'OP_ASSIGN'))
             else:
-                uniquified.append(Subscript(uniquify_exp(n.exp,varMap),'OP_ASSIGN',[uniquify_exp(n.subs[0],varMap)]))
+                uniquified.append(Subscript(uniquify_exp(n.expr,varMap),'OP_ASSIGN',[uniquify_exp(n.subs[0],varMap)]))
 
         return Assign(uniquified,expr)
 
     elif isinstance(s,Discard):
-        return Discard(uniquify_exp(s.expr),varMap)
+        return Discard(uniquify_exp(s.expr,varMap))
 
     elif isinstance(s,Return):
         return Return(uniquify_exp(s.value,varMap))
@@ -75,13 +75,13 @@ def uniquify_stmt(s,varMap):
         #compute locals
         name = varMap[s.name]
         localVars = varNames(s.code) | set(s.argnames)
-        print localVars
+        #print localVars
         for v in localVars:
             uniName = v + "$" + str(varLabel)
             varLabel+=1
             varMap[v]=uniName
-        print varMap
-        print s.code
+        #print varMap
+        #print s.code
         return Function(s.decorators,name,[varMap[a] for a in s.argnames],
                         s.defaults,s.flags,s.doc,uniquify(s.code,varMap))
 
@@ -124,7 +124,7 @@ def uniquify_exp(e,varMap):
     elif isinstance(e,CallFunc):
         args = []
         for exp in e.args:
-            print exp
+            #print exp
             args.append(uniquify_exp(exp,varMap))
         
         return CallFunc(uniquify_exp(e.node,varMap),args,e.star_args,e.dstar_args)
@@ -133,7 +133,7 @@ def uniquify_exp(e,varMap):
         expr = uniquify_exp(e.expr,varMap)
         ops = []
         for (op,exp) in e.ops:
-            ops.append((uniquify_exp(op,varMap),uniquify_exp(exp,varMap)))
+            ops.append((op,uniquify_exp(exp,varMap)))
         return Compare(expr,ops)
 
     elif isinstance(e,And):

@@ -192,7 +192,7 @@ def interferencePoint(instructionList,interference,vars):
             else:
                 for v in i.liveAfter:
                     if v!=t:
-                        print i
+                        #print i
                         interference[v].add(t)
                         interference[t].add(v)
 
@@ -389,7 +389,7 @@ def saturation(vertices,interferenceGraph,coloring):
     #print v
     
     #print v
-        print v
+    
         if v.name[0] == "#":
             initSat.add_task(v,-sat,countTmp)
             countTmp = countTmp-1
@@ -431,7 +431,7 @@ def allocateRegisters(toSpill,instructionList,variables,coloring,good,bad,check)
 
     else:
         i = instructionList[0]
-        print i
+        #print i
         if isinstance(i,AddL):
             regl = i.left
             regr = i.right
@@ -597,7 +597,7 @@ def allocateRegisters(toSpill,instructionList,variables,coloring,good,bad,check)
             regl = i.left
             regr = i.right
             localR = toSpill.has_key(regr)
-            if isinstance(regl,Con) or isinstance(regl,Address):
+            if isinstance(regl,Con):
                 if localR:
                     goodNode = MovL((regl,Address(toSpill[regr])))
                 else:
@@ -605,7 +605,22 @@ def allocateRegisters(toSpill,instructionList,variables,coloring,good,bad,check)
                 good.append(goodNode)
                 bad.append(i)
                 return allocateRegisters(toSpill,instructionList[1:],variables,coloring,good,bad,check)
-        
+
+            elif isinstance(regl,Address):
+                if localR:
+                    check = False
+                    badNodeMove = MovL((regl,tmp))
+                    badNodeAdd = MovL((tmp,regr))
+                    good.append(i)
+                    bad.extend([badNodeMove,badNodeAdd])
+                    return allocateRegisters(toSpill,instructionList[1:],variables,coloring,good,bad,check)
+                else:
+                    goodNode = MovL((regl,Register(colorMap[coloring[regr]])))
+                    good.append(goodNode)
+                    bad.append(i)
+                    return allocateRegisters(toSpill,instructionList[1:],variables,coloring,good,bad,check)
+
+
             else:
                 localL = toSpill.has_key(regl)
                 if localL and localR:

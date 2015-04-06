@@ -102,7 +102,7 @@ def flatten_exp(e):
         return (tv,Name(newNameResult))
     
     elif isinstance(e,Subscript):
-        print e
+        #print e
         (vE,aE) = flatten_exp(e.expr)
         (vS,aS) = flatten_exp(e.subs[0])
         vE.extend(vS)
@@ -141,7 +141,7 @@ def flatten_exp(e):
         (v,a) = flatten_exp(e.rhs)
         newNode = Assign([AssName(e.var.name,'OP_ASSIGN')],a)
         v.append(newNode)
-        
+        #print e
         (vB,aB) = flatten_exp(e.body)
         newName = label + str(templabel)
         templabel = templabel + 1
@@ -153,15 +153,14 @@ def flatten_exp(e):
     elif isinstance(e,List):
         elements = []
         pre = []
-        print e
-        print e.nodes
+        #print e
+        #print e.nodes
         for exp in e.nodes:
-            print exp
             (preP, result) = flatten_exp(exp)
             elements.append(result)
             pre.extend(preP)
-        print "ELEMENTS"
-        print elements
+        #print "ELEMENTS"
+        #print elements
         newName = label + str(templabel)
         templabel = templabel + 1
         newNode = Assign([AssName(newName,'OP_ASSIGN')], List(elements))
@@ -191,8 +190,8 @@ def flatten_exp(e):
             (v,a) = flatten_exp(exp)
             flat.extend(v)
             args.append(a)
-        print "CALL ARGS"
-        print flat
+        #print "CALL ARGS"
+        #print flat
         newName = label + str(templabel)
         templabel = templabel + 1
         newNode = Assign([AssName(newName,'OP_ASSIGN')], CallFunc(e.node,args))

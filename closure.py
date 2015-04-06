@@ -132,8 +132,8 @@ def create_closure(ast):
             initFree.append(newNode)
         funcNode = Function(None,globalName.name,[Name('$free_vars')]+ast.argnames,None,0,None,
                             Stmt(initFree+code.nodes))
-        print "LIST OF FREE NODES"
-        print freeNodes
+#print "LIST OF FREE NODES"
+#       print freeNodes
         return InjectFrom('BIG',CallFunc(Name('create_closure'),
                                          [globalName, List(freeNodes)])),[funcNode]+codeDefs
     
@@ -157,6 +157,7 @@ def create_closure(ast):
         return ProjectTo(ast.typ,s),defs
 
     elif isinstance(ast,InjectFrom):
+        #print ast
         s,defs = create_closure(ast.arg)
         return InjectFrom(ast.typ,s),defs
     
@@ -167,12 +168,14 @@ def create_closure(ast):
     elif isinstance(ast,Let):
         body,defsBody = create_closure(ast.body)
         rhs,defsRHS = create_closure(ast.rhs)
-        return Let(ast.var,body,let), defsRHS+defsBody
+        return Let(ast.var,rhs,body), defsRHS+defsBody
     
     elif isinstance(ast,List):
         elements = []
         defs = []
-        for exp in ast:
+        #print ast
+        #print ast.nodes
+        for exp in ast.nodes:
             s,nd = create_closure(exp)
             elements.append(s)
             defs.extend(nd)

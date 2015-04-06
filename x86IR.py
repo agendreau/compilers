@@ -78,6 +78,7 @@ def generateOne(instr,assignmentVariable):
     
     
     elif isinstance(instr,CallFunc):
+        #print instr
         if instr.node.name == 'input':
             funcNode = Call(instr.node.name+'_int')
             moveNode = MovL((Register("%eax"),assignmentVariable))
@@ -407,18 +408,18 @@ def generatePrint(tree):
     return [pushNode,printNode,popStack],vars
 
 def generateInstructions(function):
-    print "here"
+    #print "here"
     prologue = []
     loadParams = []
     epilogue = []
     vars = set([])
-    print "FUNCTION NAME"
-    print function.name
+    #print "FUNCTION NAME"
+    #print function.name
     if function.name != '_main':
         prologue = [Push(Register("%edi")),Push(Register("%esi")),Push(Register("%ebx")),
                     Push(Register("%edx"))]
         offset = 8
-        print function.argnames
+        #print function.argnames
         for arg in function.argnames:
             if isinstance(arg,Name):
                 loadParams.append(MovL((Address(offset),Var(arg.name))))
@@ -539,9 +540,9 @@ def outputCode(instructionList,stackSize,filename):
 def outputCode(functions,filename):
     assemblyCode=""
     for f in functions:
-        print len(f)
+        #print len(f)
         name = f[0]
-        print name
+        #print name
         stackSize = f[2]
         preamble = ".globl "+ name+"\n"+name+":\n\tpushl %ebp\n\tmovl %esp, %ebp\n\t"
         stackspace = "subl $" + str(stackSize*4)+",%esp\n\n\t"
@@ -686,7 +687,7 @@ def outputHelper(instructionList,varmap):
 def prettyPrint(IR,toString):
     if (len(IR)!=0):
         i = IR[0]
-        print i
+        #print i
         if isinstance(i,If):
             #print "IF"
             ifList = []

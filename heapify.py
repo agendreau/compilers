@@ -6,8 +6,8 @@ def free_vars(ast):
     
     if isinstance(ast,Module):
         assigned = varNames(ast)
-        print "assigned"
-        print assigned
+        #print "assigned"
+        #print assigned
         return free_vars(ast.node)-assigned
 
     elif isinstance(ast,Stmt):
@@ -66,7 +66,7 @@ def free_vars(ast):
     elif isinstance(ast,Lambda):
         local = varNames(ast.code)
         #print "lambda"
-        print free_vars(ast.code) - set(ast.argnames) - local
+        #print free_vars(ast.code) - set(ast.argnames) - local
         return free_vars(ast.code) - set(ast.argnames) - local
 
     elif isinstance(ast,UnarySub):
@@ -88,6 +88,7 @@ def free_vars(ast):
         return free_vars(ast.arg)
 
     elif isinstance(ast,Let):
+        #print ast
         return (free_vars(ast.body)|free_vars(ast.rhs))-free_vars(ast.var)
 
     elif isinstance(ast,List):

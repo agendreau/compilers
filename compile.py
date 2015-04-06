@@ -14,7 +14,7 @@ from explicate import *
 from uniquify import *
 from heapify import *
 from closure import *
-
+import heapify1
 # python compile.py example1.py
 # $gcc -m32 *.c example1.s -o test.exe -lm
 # ./text.exe
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     
     registerTest = 0
     
-    runCode = 0
+    runCode = 1
     
     flat = []
     if (debug):
@@ -55,18 +55,24 @@ if __name__ == '__main__':
         
         #freevars = free_vars(explicateAST)
         #print freevars
-        print "VARS"
-        vars = varNames(explicateAST)
-        print vars
+        #print "VARS"
+        #vars = varNames(explicateAST)
+        #print vars
         
-        toHeap = free_vars(explicateAST)
-        print toHeap
+        heapifiedAST,heaplist = heapify1.heapify(explicateAST,set([]))
+        print "HEAP list"
+        print heaplist
+        exit(-1)
+        closure,defs = create_closure(heapifiedAST)
+        
+        #toHeap = free_vars(explicateAST)
+        #print toHeap
         
         print "CLOSURES"
         closure,defs = create_closure(explicateAST)
         for n in closure.node.nodes:
             print n
-        
+
         print
         print "DEFS"
         print defs
@@ -75,11 +81,14 @@ if __name__ == '__main__':
         print "FLAT MAIN:"
         for f in flatMain:
             print f
-       
+        
         
         print
 #print defs[0]
-        funcs = flattenNJ.flatten(defs[0]) # hack to test one
+        funcs = []
+        for d in defs:
+            funcs.append(flattenNJ.flatten(d))
+        #funcs = flattenNJ.flatten(defs[0]) # hack to test one
         print "FLAT FUNCS"
 #        print funcs
         print funcs
@@ -99,17 +108,21 @@ if __name__ == '__main__':
         for i in instrs:
             print i
         print
+        exit(-1)
         #print funcs
-        
-        func1,vars1 = x86IR.generateInstructions(funcs)
+        funcList = [('main',IR,vars)]
+        for f in funcs:
+            func1,vars1 = x86IR.generateInstructions(f)
+            funcList.append((f.name,func1,vars1))
         print
         print "function defs"
-        instrsFunc = x86IR.prettyPrintInstr(func1,[])
-        print funcs.name
-        for i in instrsFunc:
-            print i
+        for f in funcList:
+            instrsFunc = x86IR.prettyPrintInstr(f[1],[])
+            for i in instrsFunc:
+                print i
+            print
 
-        funcList = [('main',IR,vars),(funcs.name,func1,vars1)]
+        #funcList = [('main',IR,vars),(funcs.name,func1,vars1)]
         funcsOutput = []
         for n in funcList:
             vars = n[2]
@@ -269,28 +282,63 @@ if __name__ == '__main__':
         '''
 #OUTPUT CODE
     if(runCode):
-        explicateAST = explicate(startAST)
+        
+        varMap={}
+        uniqueAST = uniquify(startAST,varMap)
+     
+        
+        explicateAST = explicate(uniqueAST)
+        
+        heapifiedAST,heaplist = heapify1.heapify(explicateAST,set([]))
+        
+        
+        
+        closure,defs = create_closure(heapifiedAST)
 
-        flatast = flattenNJ.flatten(explicateAST)
-        IR,vars = x86IR.generateInstructions(flatast)
+        flatMain = flattenNJ.flatten(closure)
+
+        funcs = []
+        for d in defs:
+            funcs.append(flattenNJ.flatten(d))
+
+        create_main = convertMain(flatMain)
+
+        
+        IR,vars = x86IR.generateInstructions(create_main)
+
+        funcList = [('main',IR,vars)]
+        for f in funcs:
+            func1,vars1 = x86IR.generateInstructions(f)
+            funcList.append((f.name,func1,vars1))
+
 
         check = False
+        newFuncList = funcList
+        funcsOutput = []
         while not check:
-            instrLive = []
-
-            liveAfter = set([])
-                
-            liveness = livenessAnalysis(IR,instrLive,liveAfter)
-            iGraph = interferenceGraph(liveness,vars)
+            check = True
             
-            
-            coloring = graphColor(iGraph)
+            funcList = newFuncList
+            newFuncList = []
+            for n in funcList:
+                vars = n[2]
+                name = n[0]
+                IR = n[1]
+                instrLive = []
+                liveAfter = set([])
+                liveness = livenessAnalysis(IR,instrLive,liveAfter)
+                iGraph = interferenceGraph(liveness,vars)
+                coloring = graphColor(iGraph)
+                spill = toSpill(coloring)
+                tmp = Var("#tmp")
+                vars.add(tmp)
 
-            spill = toSpill(coloring)
-            tmp = Var("#tmp")
-            vars.add(tmp)
-            good,IR,vars,check = allocateRegisters(spill,liveness,vars,coloring,[],[],True)
-    #print check
+                good,IR,newVars,check_func = allocateRegisters(spill,liveness,vars,coloring,[],[],True)
+                if check_func:
+                    funcsOutput.append((name,good,len(spill)))
+                else:
+                    check = False
+                    newFuncList.append((name,IR,vars))
 
         filename = ""
         prev = sys.argv[1].split('.')[0]
@@ -298,7 +346,7 @@ if __name__ == '__main__':
             filename += prev
             prev = "."+k
 
-        outputCode(good,len(spill),filename)
+        outputCode(funcsOutput,filename)
     
     '''
         for i in liveness:
