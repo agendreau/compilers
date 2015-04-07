@@ -168,7 +168,7 @@ def heapify(n, heaplist):
        
     elif isinstance(n, Name):
         if n.name in heaplist:
-            return Subscript(Name(n.name), 'OP_ASSIGN', [InjectFrom('INT', Const(0))])
+            return Subscript(Name(n.name), 'OP_APPLY', [InjectFrom('INT', Const(0))])
         else:
             return n   
     
