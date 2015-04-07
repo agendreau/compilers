@@ -19,9 +19,15 @@ def create_closure(ast):
     elif isinstance(ast,Stmt):
         stmts = []
         defs = []
+        
         for n in ast.nodes:
+            #print n
             (s,nd) = create_closure(n)
+            #print s
+            
             stmts.append(s)
+            #print stmts
+            #exit(-1)
             defs.extend(nd)
         
         return Stmt(stmts),defs

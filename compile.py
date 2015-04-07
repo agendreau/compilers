@@ -62,25 +62,52 @@ if __name__ == '__main__':
         heapifiedAST,heaplist = heapify1.heapify(explicateAST,set([]))
         print "HEAP list"
         print heaplist
-        exit(-1)
+        print "heapified ast"
+        print heapifiedAST
+        
+        
         closure,defs = create_closure(heapifiedAST)
         
         #toHeap = free_vars(explicateAST)
         #print toHeap
         
         print "CLOSURES"
-        closure,defs = create_closure(explicateAST)
+    
         for n in closure.node.nodes:
             print n
-
+        
         print
         print "DEFS"
-        print defs
+        for d in defs:
+            print d.name
+            print d.argnames
+            for c in d.code:
+                '''
+                if isinstance(c,Return):
+                    print "TEST"
+                    print c.value.test
+                    print "THEN"
+                    print c.value.then
+                    print "ELSE"
+                    if isinstance(c.value.else_,If):
+                        print c.value.else_.test
+                        print
+                        print c.value.else_.then
+                        print
+                        print c.value.else_.else_
+                    else:
+                        print c.value.else_
+                else:
+                '''
+                print c
+    
         print
+        exit(-1)
         flatMain = flattenNJ.flatten(closure)
         print "FLAT MAIN:"
         for f in flatMain:
             print f
+
         
         
         print
@@ -91,7 +118,33 @@ if __name__ == '__main__':
         #funcs = flattenNJ.flatten(defs[0]) # hack to test one
         print "FLAT FUNCS"
 #        print funcs
-        print funcs
+#print funcs
+        for f in funcs:
+            print f.name
+            print f.argnames
+            for c in f.code:
+                if isinstance(c,If):
+                    print "TEST"
+                    print c.tests[0][0]
+                    print "THEN"
+                    for s in c.tests[0][1]:
+                        print s
+                    print "ELSE"
+                    for e in c.else_:
+                        if isinstance(e,If):
+                            print "elif test"
+                            print e.tests[0][0]
+                            print "elif then"
+                            for st in e.tests[0][1]:
+                                print st
+                            print "elif else"
+                            for sts in e.else_:
+                                print sts
+                        else:
+                            print e
+                else:
+                    print c
+    #exit(-1)
         '''
         for f in funcs.code:
             print f

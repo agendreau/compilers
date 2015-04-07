@@ -108,7 +108,7 @@ def flatten_exp(e):
         vE.extend(vS)
         newName = label + str(templabel)
         templabel = templabel + 1
-        newNode = Assign([AssName(newName,'OP_ASSIGN')],Subscript(aE,'OP_APPLY',[aS]))
+        newNode = Assign([AssName(newName,'OP_ASSIGN')],Subscript(aE,e.flags,[aS]))
         vE.append(newNode)
         return (vE,Name(newName))
     

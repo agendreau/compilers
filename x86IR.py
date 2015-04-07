@@ -215,7 +215,7 @@ def generateOne(instr,assignmentVariable):
             ##print subs
             pushNode = Push(Var(subs.name))
             subNode = Call('get_subscript')
-            popStack = AddL((Con(4),Register("%esp")))
+            popStack = AddL((Con(8),Register("%esp")))
             moveNode = MovL((Register("%eax"),assignmentVariable))
             vars.add(Var(subs.name))
             
@@ -223,7 +223,7 @@ def generateOne(instr,assignmentVariable):
             ##print instr
             pushNode = Push(Con(subs))
             subNode = Call('get_subscript')
-            popStack = AddL((Con(4),Register("%esp")))
+            popStack = AddL((Con(8),Register("%esp")))
             moveNode = MovL((Register("%eax"),assignmentVariable))
         
 #return [pushCollection,pushNode,subNode,popStack,moveNode],vars
@@ -429,8 +429,8 @@ def generateInstructions(function):
                 vars.add(Var(arg))
             offset+=4
         
-        epilogue = [Pop(Register("%edi")),Pop(Register("%esi")),Pop(Register("%ebx")),
-                                Pop(Register("%edx"))]
+        epilogue = [Pop(Register("%edx")),Pop(Register("%ebx")),Pop(Register("%esi")),
+                                Pop(Register("%edi"))]
 
     astList = function.code.nodes
     #print astList

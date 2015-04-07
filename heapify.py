@@ -65,8 +65,8 @@ def free_vars(ast):
 
     elif isinstance(ast,Lambda):
         local = varNames(ast.code)
-        #print "lambda"
-        #print free_vars(ast.code) - set(ast.argnames) - local
+        print "lambda: "
+        print free_vars(ast.code) - set(ast.argnames) - local
         return free_vars(ast.code) - set(ast.argnames) - local
 
     elif isinstance(ast,UnarySub):
