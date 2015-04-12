@@ -140,7 +140,12 @@ def livenessAnalysis(oldList,liveSet,liveAfter):
 
 
             return livenessAnalysis(oldList[:-1],[newIf]+liveSet,liveIf[0][0].liveBefore)
-                
+
+        elif isinstance(i,While):
+            body = i.body
+            guard = i.test
+            
+
         else:
             return "Error in computing live point"
 

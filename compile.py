@@ -30,7 +30,7 @@ if __name__ == '__main__':
     
     registerTest = 0
     
-    runCode = 1
+    runCode = 0
     
     flat = []
     if (debug):
@@ -102,8 +102,10 @@ if __name__ == '__main__':
                 print c
     
         print
-        exit(-1)
+        
         flatMain = flattenNJ.flatten(closure)
+        print "flat main no list"
+        print flatMain
         print "FLAT MAIN:"
         for f in flatMain:
             print f
@@ -156,8 +158,9 @@ if __name__ == '__main__':
         print
         
         IR,vars = x86IR.generateInstructions(create_main)
+        print IR
         instrs = x86IR.prettyPrintInstr(IR,[])
-        print 
+        #print instrs
         for i in instrs:
             print i
         print

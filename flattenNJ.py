@@ -57,6 +57,23 @@ def flatten_stmt(s):
         (v,a) = flatten_exp(s.value)
         return v+[Return(a)]
 
+    elif isinstance(s,While):
+        (vt,at) = flatten_exp(s.test)
+        body = flatten(s.body)
+        whilenode = While(at,Stmt(body),s.else_)
+        print "IS WHILE NODE"
+        print isinstance(whilenode,While)
+        return vt+[whilenode]
+
+    elif isinstance(s,If):
+        flat_test = []
+        for t in s.tests:
+            test = flatten_exp(t[0],varMap)
+            stmts = flatten(t[1],varMap)
+            flat_test.append((test,stmts))
+        else_ = flatten(s.else_,varMap)
+        return If(flat_test,else_)
+
 
 def flatten_exp(e):
     global templabel

@@ -203,4 +203,21 @@ def create_closure(ast):
         e2,nd2 = create_closure(ast.ops[0][1])
         return Compare(e1,[(ast.ops[0][0],e2)]),nd1+nd2
 
+    elif isinstance(ast,While):
+        test,nd1 = create_closure(ast.test)
+        body,nd2 = create_closure(ast.body)
+        return While(test,body,ast.else_),nd1+nd2
+
+    elif isinstance(ast,If):
+        closure_test = []
+        nd_test = []
+        for t in ast.tests:
+            test,nd1 = create_closure(t[0])
+            stmts,nd2 = create_closure(t[1])
+            closure_test.append((test,stmts))
+            nd_test.extend(nd1)
+            nd_test.extend(nd2)
+        elses_,nd_else = create_closure(ast.else_)
+        return If(closure_test,elses_),nd_test+nd_else
+
     

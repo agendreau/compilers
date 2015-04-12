@@ -85,6 +85,21 @@ def uniquify_stmt(s,varMap):
         return Function(s.decorators,name,[varMap[a] for a in s.argnames],
                         s.defaults,s.flags,s.doc,uniquify(s.code,varMap))
 
+    elif isinstance(s,While):
+        test = uniquify_exp(s.test,varMap)
+        body = uniquify(s.body,varMap)
+        return While(test,body,s.else_)
+
+    elif isinstance(s,If):
+        unique_test = []
+        for t in s.tests:
+            test = uniquify_exp(t[0],varMap)
+            stmts = uniquify(t[1],varMap)
+            unique_test.append((test,stmts))
+        else_ = uniquify(s.else_,varMap)
+        return If(unique_test,else_)
+
+
 def uniquify_exp(e,varMap):
     global varLabel
     

@@ -238,6 +238,20 @@ def heapify(n, heaplist):
         for x in n.args:
             arglist.append(heapify(x,heaplist))
         return CallDef(heapify(n.node,heaplist),arglist)
-        
+
+    elif isinstance(n,While):
+        test = heapify(n.test,heaplist)
+        body = heapify(n.body,heaplist)
+        return While(test,body,n.else_)
+    
+    elif isinstance(n,If):
+        heap_test = []
+        for t in n.tests:
+            test = heapify(t[0],heaplist)
+            stmts = heapify(t[1],heaplist)
+            heap_test.append((test,stmts))
+        else_ = heapify(n.else_,heaplist)
+        return If(heap_test,else_)
+    
     else:
         return n

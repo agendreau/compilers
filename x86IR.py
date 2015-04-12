@@ -439,7 +439,7 @@ def generateInstructions(function):
 
     #print astList
     for tree in astList:
-        #print tree
+        print tree
         if isinstance(tree,Assign):
             newIR,v = generateAssign(tree)
             IR.extend(newIR)
@@ -469,9 +469,49 @@ def generateInstructions(function):
             
             IR.extend([moveNode])#,jumpBack])
     
+        elif isinstance(tree,While):
+            newIR,newVars = generateWhile(tree)
+            IR.extend(newIR)
+            vars = newVars | vars
+    
     IR.extend(epilogue)
 
     return IR,vars
+
+def generateWhile(instr):
+    vars = set([])
+    #s = []
+    if isinstance(instr.test,Name):
+        compare = CmpL((Con(0),Var(instr.test.name)))
+        vars.add(Var(instr.test.name))
+    else:
+        compare = CmpL((Con(0),Con(instr.test.value)))
+
+    IRwhile = []
+    for n in instr.body:
+        if isinstance(n,Assign):
+            newIR,v = generateAssign(n)
+            IRwhile.extend(newIR)
+            vars = vars | v
+        elif isinstance(n,Printnl):
+            newIR,v = generatePrint(n)
+            IRwhile.extend(newIR)
+            vars = vars | v
+
+        elif isinstance(n,While):
+            newIR,v = generateWhile(n)
+            IRwhile.extend(newIR)
+            vars = vars | v
+
+        else:
+            newIR,newVars = generateIf(n)
+            IRwhile.extend(newIR)
+            vars = newVars | vars
+
+
+
+    return [While([compare],IRwhile+[compare],instr.else_)],vars
+
 
 def generateIf(instr):
     
@@ -494,6 +534,10 @@ def generateIf(instr):
                 newIR,v = generatePrint(n)
                 IRif.extend(newIR)
                 vars = vars | v
+            elif isinstance(n,While):
+                newIR,v = generateWhile(n)
+                IRif.extend(newIR)
+                vars = vars | v
             
             else:
                 newIR,newVars = generateIf(n)
@@ -511,6 +555,10 @@ def generateIf(instr):
         elif isinstance(e,Printnl):
             newIR,v = generatePrint(e)
             IR.extend(newIR)
+            vars = vars | v
+        elif isinstance(n,While):
+            newIR,v = generateWhile(n)
+            IRif.extend(newIR)
             vars = vars | v
         
         else:
@@ -726,6 +774,11 @@ def prettyPrintInstr(IR,toString):
             ifList.extend(["else "] + elses)
             
             return prettyPrintInstr(IR[1:],toString+ifList)
+        elif isinstance(i,While):
+            print "print while"
+            guard = ["While "]+prettyPrintInstr(i.test,[])
+            body = prettyPrintInstr(i.body,[])+["END"]
+            return prettyPrintInstr(IR[1:],toString+guard+body)
         else:
             return prettyPrintInstr(IR[1:],toString+[str(i)])
     else:

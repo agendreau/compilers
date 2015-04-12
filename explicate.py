@@ -139,6 +139,20 @@ def explicate_statement(s):
                       Lambda(s.argnames,s.defaults,s.flags,
                              explicate(s.code)))
 
+    elif isinstance(s,While):
+        test = explicate_expression(s.test)
+        body = explicate(s.body)
+        return While(test,body,s.else_)
+    
+    elif isinstance(s,If):
+        explicate_test = []
+        for t in s.tests:
+            test = explicate_exp(t[0])
+            stmts = explicate(t[1])
+            explicate_test.append((test,stmts))
+        else_ = explicate(s.else_)
+        return If(explicate_test,else_)
+
 def explicate_expression(e):
     global tempLabel
     if isinstance(e,Const):

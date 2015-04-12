@@ -109,6 +109,19 @@ def free_vars(ast):
         #print e
         return free_vars(ast.expr)|free_vars(ast.ops[0][1])
 
+    elif isinstance(ast,While):
+        return free_vars(ast.test) | free_vars(ast.body)
+    
+    elif isinstance(ast,If):
+        vars_test = set([])
+        for t in ast.tests:
+            test = free_vars(t[0])
+            stmts = free_vars(t[1])
+            vars_test.update(test)
+            vars_test.update(free_vars)
+        return vars_test | free_vars(ast.else_)
+       
+
 
 '''
 def toHeapify(ast,toHeap):
